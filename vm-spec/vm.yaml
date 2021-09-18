@@ -1,0 +1,58 @@
+apiVersion: kubevirt.io/v1alpha3
+kind: VirtualMachine
+metadata:
+  labels:
+    kubevirt.io/vm: vm-cirros
+  name: vm-cirros
+spec:
+  running: true
+  template:
+    metadata:
+      labels:
+        kubevirt.io/vm: vm-cirros
+    spec:
+      domain:
+        features:
+          kvm:
+            hidden: true
+        memory:
+           guest: "10G"
+        devices:
+          disks:
+          - disk:
+              bus: virtio
+            name: containerdisk
+          - disk:
+              bus: virtio
+            name: cloudinitdisk
+          - name: emptydisk
+            disk:
+              bus: virtio
+          gpus:
+          - deviceName: nvidia.com/GP107_GeForce_GTX_1050_Ti
+            name: gpu1
+          interfaces:
+          - name: default
+            masquerade: {}
+      terminationGracePeriodSeconds: 0
+      evictionStrategy: LiveMigrate
+      networks:
+      - name: default
+        pod: {}
+      volumes:
+      - name: emptydisk
+        emptyDisk:
+           capacity: 2Gi
+      - name: containerdisk
+        containerDisk:
+          image: docker.io/jafar9/ubuntu-container-disk:custom-pkg
+      - name: cloudinitdisk
+        cloudInitNoCloud:
+          userData: |-
+              #cloud-config
+              name: ubuntu
+              password: test123
+              lock-passwd: False
+              ssh_pwauth: True
+              chpasswd:
+                 expire: False
